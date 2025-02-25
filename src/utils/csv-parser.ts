@@ -3,20 +3,36 @@ import { Employee } from "@/types/business-unit";
 
 export const parseCSV = (csvContent: string): Partial<Employee>[] => {
   const lines = csvContent.split("\n");
-  const headers = lines[0].split(",").map(header => header.trim());
+  const headers = lines[0].split(",").map(header => header.trim().toLowerCase());
+
+  console.log("CSV Headers:", headers); // Debug log
 
   return lines.slice(1)
     .filter(line => line.trim() !== "")
-    .map(line => {
+    .map((line, index) => {
       const values = line.split(",").map(value => value.trim());
+      console.log(`Processing line ${index + 1}:`, values); // Debug log
+
+      const nameIndex = headers.indexOf("name");
+      const emailIndex = headers.indexOf("email");
+      const remoteDaysIndex = headers.indexOf("remotedays");
+
+      console.log("Indices:", { nameIndex, emailIndex, remoteDaysIndex }); // Debug log
+
+      if (nameIndex === -1) {
+        console.error("Name column not found in CSV"); // Debug log
+      }
+
       const employee: Partial<Employee> = {
-        name: values[headers.indexOf("name")],
-        email: values[headers.indexOf("email")],
-        remoteDays: values[headers.indexOf("remoteDays")]
+        name: nameIndex >= 0 ? values[nameIndex] : "Unknown",
+        email: emailIndex >= 0 ? values[emailIndex] : "",
+        remoteDays: remoteDaysIndex >= 0 ? values[remoteDaysIndex]
           ?.split(";")
           .map(day => parseInt(day))
-          .filter(day => !isNaN(day)) || [],
+          .filter(day => !isNaN(day)) : [],
       };
+
+      console.log("Parsed employee:", employee); // Debug log
       return employee;
     });
 };
