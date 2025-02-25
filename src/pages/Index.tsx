@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Card,
@@ -20,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, UserPlus, Users } from "lucide-react";
 import { BusinessUnit, Employee } from "@/types/business-unit";
+import CsvUpload from "@/components/CsvUpload";
+import { useToast } from "@/components/ui/use-toast";
 
 const mockBusinessUnits: BusinessUnit[] = [
   {
@@ -41,7 +42,34 @@ const mockBusinessUnits: BusinessUnit[] = [
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [businessUnits] = useState<BusinessUnit[]>(mockBusinessUnits);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>(mockBusinessUnits);
+  const { toast } = useToast();
+
+  const handleEmployeeImport = (employees: Partial<Employee>[]) => {
+    if (employees.length === 0) {
+      toast({
+        title: "No employees found",
+        description: "The CSV file appears to be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedBusinessUnits = [...businessUnits];
+    const firstUnit = updatedBusinessUnits[0];
+    
+    if (firstUnit) {
+      const newEmployees = employees.map((emp, index) => ({
+        id: `imported-${index}`,
+        name: emp.name || "Unknown",
+        email: emp.email || "",
+        remoteDays: emp.remoteDays || [],
+      }));
+
+      firstUnit.employees = [...firstUnit.employees, ...newEmployees];
+      setBusinessUnits(updatedBusinessUnits);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-app-light p-6 animate-fade-in">
@@ -80,10 +108,13 @@ const Index = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Business Units</CardTitle>
-              <Button variant="outline" size="sm">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Unit
-              </Button>
+              <div className="flex space-x-2">
+                <CsvUpload onUpload={handleEmployeeImport} />
+                <Button variant="outline" size="sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Unit
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
