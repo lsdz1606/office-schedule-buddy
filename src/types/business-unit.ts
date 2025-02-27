@@ -4,6 +4,7 @@ export interface Employee {
   name: string;
   email: string;
   remoteDays: number[];
+  businessUnit?: string;
 }
 
 export interface BusinessUnit {

@@ -16,8 +16,14 @@ export const parseCSV = (csvContent: string): Partial<Employee>[] => {
       const nameIndex = headers.indexOf("name");
       const emailIndex = headers.indexOf("email");
       const remoteDaysIndex = headers.indexOf("remotedays");
+      const businessUnitIndex = headers.indexOf("main business unit");
 
-      console.log("Indices:", { nameIndex, emailIndex, remoteDaysIndex }); // Debug log
+      console.log("Indices:", { 
+        nameIndex, 
+        emailIndex, 
+        remoteDaysIndex,
+        businessUnitIndex 
+      }); // Debug log
 
       if (nameIndex === -1) {
         console.error("Name column not found in CSV"); // Debug log
@@ -30,6 +36,7 @@ export const parseCSV = (csvContent: string): Partial<Employee>[] => {
           ?.split(";")
           .map(day => parseInt(day))
           .filter(day => !isNaN(day)) : [],
+        businessUnit: businessUnitIndex >= 0 ? values[businessUnitIndex] : undefined
       };
 
       console.log("Parsed employee:", employee); // Debug log

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Card,
@@ -56,19 +57,47 @@ const Index = () => {
     }
 
     const updatedBusinessUnits = [...businessUnits];
-    const firstUnit = updatedBusinessUnits[0];
     
-    if (firstUnit) {
-      const newEmployees = employees.map((emp, index) => ({
-        id: `imported-${index}`,
+    // Group employees by business unit
+    const employeesByBusinessUnit: Record<string, Partial<Employee>[]> = {};
+    
+    employees.forEach(emp => {
+      const businessUnitName = emp.businessUnit || "Unknown";
+      if (!employeesByBusinessUnit[businessUnitName]) {
+        employeesByBusinessUnit[businessUnitName] = [];
+      }
+      employeesByBusinessUnit[businessUnitName].push(emp);
+    });
+    
+    // Add employees to existing business units or create new ones
+    Object.entries(employeesByBusinessUnit).forEach(([unitName, unitEmployees]) => {
+      // Find existing business unit
+      let businessUnit = updatedBusinessUnits.find(
+        unit => unit.name.toLowerCase() === unitName.toLowerCase()
+      );
+      
+      // Create new business unit if it doesn't exist
+      if (!businessUnit) {
+        businessUnit = {
+          id: `bu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: unitName,
+          employees: []
+        };
+        updatedBusinessUnits.push(businessUnit);
+      }
+      
+      // Add employees to the business unit
+      const newEmployees = unitEmployees.map((emp, index) => ({
+        id: `imported-${Date.now()}-${index}`,
         name: emp.name || "Unknown",
         email: emp.email || "",
         remoteDays: emp.remoteDays || [],
       }));
-
-      firstUnit.employees = [...firstUnit.employees, ...newEmployees];
-      setBusinessUnits(updatedBusinessUnits);
-    }
+      
+      businessUnit.employees = [...businessUnit.employees, ...newEmployees];
+    });
+    
+    setBusinessUnits(updatedBusinessUnits);
   };
 
   return (
