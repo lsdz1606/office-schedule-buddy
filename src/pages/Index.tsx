@@ -103,6 +103,11 @@ const Index = () => {
 
   const counts = calculateCounts();
 
+  // Calculate total employees
+  const totalEmployees = businessUnits.reduce(
+    (total, unit) => total + unit.employees.length, 0
+  );
+
   const handleEmployeeImport = (employees: Partial<Employee>[]) => {
     if (employees.length === 0) {
       toast({
@@ -289,6 +294,43 @@ const Index = () => {
                 )}
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Total Employees Counters */}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="animate-slide-up [animation-delay:600ms]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Total In Office</CardTitle>
+            <CardDescription>
+              Employees present on {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <div className="text-5xl font-bold text-green-600">{counts.officeCount}</div>
+              <div className="ml-4 text-sm text-gray-500">
+                {Math.round((counts.officeCount / totalEmployees) * 100) || 0}% of total workforce
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="animate-slide-up [animation-delay:700ms]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Total Remote</CardTitle>
+            <CardDescription>
+              Employees working remotely on {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <div className="text-5xl font-bold text-blue-600">{counts.remoteCount}</div>
+              <div className="ml-4 text-sm text-gray-500">
+                {Math.round((counts.remoteCount / totalEmployees) * 100) || 0}% of total workforce
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
