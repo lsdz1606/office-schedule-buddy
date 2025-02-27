@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/business-unit";
 
 export const parseCSV = (csvContent: string): Partial<Employee>[] => {
@@ -29,13 +28,35 @@ export const parseCSV = (csvContent: string): Partial<Employee>[] => {
         console.error("Name column not found in CSV"); // Debug log
       }
 
+      // Parse remote days
+      let remoteDays: number[] = [];
+      if (remoteDaysIndex >= 0 && values[remoteDaysIndex]) {
+        // Handle different potential formats (semicolon-separated, comma-separated)
+        const dayStrings = values[remoteDaysIndex].includes(';') 
+          ? values[remoteDaysIndex].split(';') 
+          : values[remoteDaysIndex].split(/[,\s]+/);
+          
+        remoteDays = dayStrings
+          .map(day => {
+            // Convert text day names to numbers (1-5 for Monday-Friday)
+            const dayLower = day.trim().toLowerCase();
+            if (dayLower === 'monday' || dayLower === 'mon') return 1;
+            if (dayLower === 'tuesday' || dayLower === 'tue') return 2;
+            if (dayLower === 'wednesday' || dayLower === 'wed') return 3;
+            if (dayLower === 'thursday' || dayLower === 'thu') return 4;
+            if (dayLower === 'friday' || dayLower === 'fri') return 5;
+            // Otherwise try to parse as number
+            return parseInt(day);
+          })
+          .filter(day => !isNaN(day) && day >= 1 && day <= 5);
+      }
+      
+      console.log("Parsed remote days:", remoteDays); // Debug log
+
       const employee: Partial<Employee> = {
         name: nameIndex >= 0 ? values[nameIndex] : "Unknown",
         email: emailIndex >= 0 ? values[emailIndex] : "",
-        remoteDays: remoteDaysIndex >= 0 ? values[remoteDaysIndex]
-          ?.split(";")
-          .map(day => parseInt(day))
-          .filter(day => !isNaN(day)) : [],
+        remoteDays: remoteDays,
         businessUnit: businessUnitIndex >= 0 ? values[businessUnitIndex] : undefined
       };
 

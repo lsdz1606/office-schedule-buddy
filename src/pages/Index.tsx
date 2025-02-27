@@ -46,6 +46,36 @@ const Index = () => {
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>(mockBusinessUnits);
   const { toast } = useToast();
 
+  // Convert day of week (0-6, Sunday-Saturday) to our 1-5 (Monday-Friday) format
+  const convertDayOfWeek = (dayOfWeek: number): number | null => {
+    // Sunday (0) and Saturday (6) return null
+    if (dayOfWeek === 0 || dayOfWeek === 6) return null;
+    // Monday (1) to Friday (5) stay the same
+    return dayOfWeek;
+  };
+
+  const isEmployeeRemoteOnDate = (employee: Employee, date: Date): boolean => {
+    const dayOfWeek = convertDayOfWeek(date.getDay());
+    // If weekend or no remote days set, return false
+    if (dayOfWeek === null || !employee.remoteDays) return false;
+    return employee.remoteDays.includes(dayOfWeek);
+  };
+
+  const formatRemoteDays = (remoteDays: number[]): string => {
+    if (!remoteDays || remoteDays.length === 0) return "None";
+    
+    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    return remoteDays
+      .sort((a, b) => a - b) // Sort days in order
+      .map(day => {
+        // Convert 1-5 to 0-4 for array index
+        const index = day - 1;
+        return index >= 0 && index < dayNames.length ? dayNames[index] : null;
+      })
+      .filter(Boolean) // Remove any null values
+      .join(", ");
+  };
+
   const handleEmployeeImport = (employees: Partial<Employee>[]) => {
     if (employees.length === 0) {
       toast({
@@ -193,30 +223,22 @@ const Index = () => {
               <TableBody>
                 {businessUnits.flatMap((unit) =>
                   unit.employees.map((employee) => (
-                    <TableRow key={employee.id}>
+                    <TableRow key={`${employee.id}-${unit.id}`}>
                       <TableCell className="font-medium">{employee.name}</TableCell>
                       <TableCell>{unit.name}</TableCell>
                       <TableCell>
-                        {employee.remoteDays
-                          .map((day) =>
-                            ["Mon", "Tue", "Wed", "Thu", "Fri"][day - 1]
-                          )
-                          .join(", ")}
+                        {formatRemoteDays(employee.remoteDays)}
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
                           className={
-                            employee.remoteDays.includes(
-                              selectedDate.getDay()
-                            )
+                            isEmployeeRemoteOnDate(employee, selectedDate)
                               ? "bg-blue-50"
                               : "bg-green-50"
                           }
                         >
-                          {employee.remoteDays.includes(
-                            selectedDate.getDay()
-                          )
+                          {isEmployeeRemoteOnDate(employee, selectedDate)
                             ? "Remote"
                             : "In Office"}
                         </Badge>
