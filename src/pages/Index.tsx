@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Card,
@@ -17,12 +18,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, UserPlus, Users } from "lucide-react";
+import { Edit, UserPlus, Users, Search } from "lucide-react";
 import { BusinessUnit, Employee } from "@/types/business-unit";
 import CsvUpload from "@/components/CsvUpload";
 import { useToast } from "@/components/ui/use-toast";
 import { optimizeRemoteDays } from "@/utils/schedule-optimizer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 
 const mockBusinessUnits: BusinessUnit[] = [
   {
@@ -48,6 +50,7 @@ const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>(mockBusinessUnits);
   const [employeeView, setEmployeeView] = useState<EmployeeView>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const { toast } = useToast();
   const MAX_OFFICE_CAPACITY = 32;
 
@@ -111,7 +114,7 @@ const Index = () => {
     (total, unit) => total + unit.employees.length, 0
   );
 
-  // Get filtered employees based on selected view and date
+  // Get filtered employees based on selected view, date, and search query
   const getFilteredEmployees = () => {
     // Flatten all employees from all business units into one array, keeping track of their business unit
     const allEmployeesWithUnit = businessUnits.flatMap(unit => 
@@ -122,15 +125,25 @@ const Index = () => {
       }))
     );
     
-    if (employeeView === "all") {
-      return allEmployeesWithUnit;
+    // First filter by remote status if needed
+    let filteredByStatus = allEmployeesWithUnit;
+    if (employeeView !== "all") {
+      filteredByStatus = allEmployeesWithUnit.filter(employee => {
+        const isRemote = isEmployeeRemoteOnDate(employee, selectedDate);
+        return employeeView === "remote" ? isRemote : !isRemote;
+      });
     }
     
-    // Filter based on remote status for the selected date
-    return allEmployeesWithUnit.filter(employee => {
-      const isRemote = isEmployeeRemoteOnDate(employee, selectedDate);
-      return employeeView === "remote" ? isRemote : !isRemote;
-    });
+    // Then filter by search query if one exists
+    if (!searchQuery.trim()) {
+      return filteredByStatus;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return filteredByStatus.filter(employee => 
+      employee.name.toLowerCase().includes(query) || 
+      employee.businessUnit.toLowerCase().includes(query)
+    );
   };
 
   const filteredEmployees = getFilteredEmployees();
@@ -197,6 +210,20 @@ const Index = () => {
       description: `Remote days assigned to maintain max ${MAX_OFFICE_CAPACITY} people in office per day`,
     });
   };
+
+  // Custom search component for reuse in each tab
+  const SearchInput = () => (
+    <div className="relative mb-4">
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+      <Input
+        type="text"
+        placeholder="Search by name or team..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="pl-9 w-full md:w-64"
+      />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-app-light p-6 animate-fade-in">
@@ -279,7 +306,7 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={employeeView} onValueChange={(value) => setEmployeeView(value as EmployeeView)}>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
                 <TabsList>
                   <TabsTrigger value="all">All Employees</TabsTrigger>
                   <TabsTrigger value="in-office">In Office</TabsTrigger>
@@ -291,6 +318,7 @@ const Index = () => {
               </div>
               
               <TabsContent value="all" className="mt-0">
+                <SearchInput />
                 <EmployeeTable 
                   employees={filteredEmployees} 
                   selectedDate={selectedDate} 
@@ -300,6 +328,7 @@ const Index = () => {
               </TabsContent>
               
               <TabsContent value="in-office" className="mt-0">
+                <SearchInput />
                 <EmployeeTable 
                   employees={filteredEmployees} 
                   selectedDate={selectedDate} 
@@ -309,6 +338,7 @@ const Index = () => {
               </TabsContent>
               
               <TabsContent value="remote" className="mt-0">
+                <SearchInput />
                 <EmployeeTable 
                   employees={filteredEmployees} 
                   selectedDate={selectedDate} 
