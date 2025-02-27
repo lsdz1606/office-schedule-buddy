@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import {
   Card,
@@ -113,37 +114,50 @@ const Index = () => {
     (total, unit) => total + unit.employees.length, 0
   );
 
-  // Get filtered employees based on selected view, date, and search query
-  const getFilteredEmployees = useCallback(() => {
-    // Flatten all employees from all business units into one array, keeping track of their business unit
-    const allEmployeesWithUnit = businessUnits.flatMap(unit => 
+  // Prepare and memoize the base employee data array
+  const allEmployeesWithUnit = useCallback(() => 
+    businessUnits.flatMap(unit => 
       unit.employees.map(employee => ({
         ...employee,
         businessUnit: unit.name,
         businessUnitId: unit.id
       }))
-    );
-    
-    // First filter by remote status if needed
-    let filteredByStatus = allEmployeesWithUnit;
-    if (employeeView !== "all") {
-      filteredByStatus = allEmployeesWithUnit.filter(employee => {
+    ),
+    [businessUnits]
+  );
+
+  // Separate filters to better manage performance
+  const applyStatusFilter = useCallback(
+    (employees) => {
+      if (employeeView === "all") return employees;
+      
+      return employees.filter(employee => {
         const isRemote = isEmployeeRemoteOnDate(employee, selectedDate);
         return employeeView === "remote" ? isRemote : !isRemote;
       });
-    }
-    
-    // Then filter by search query if one exists
-    if (!searchQuery.trim()) {
-      return filteredByStatus;
-    }
-    
-    const query = searchQuery.toLowerCase().trim();
-    return filteredByStatus.filter(employee => 
-      employee.name.toLowerCase().includes(query) || 
-      employee.businessUnit.toLowerCase().includes(query)
-    );
-  }, [businessUnits, employeeView, selectedDate, searchQuery]);
+    },
+    [employeeView, selectedDate]
+  );
+
+  const applySearchFilter = useCallback(
+    (employees) => {
+      if (!searchQuery.trim()) return employees;
+      
+      const query = searchQuery.toLowerCase().trim();
+      return employees.filter(employee => 
+        employee.name.toLowerCase().includes(query) || 
+        employee.businessUnit.toLowerCase().includes(query)
+      );
+    },
+    [searchQuery]
+  );
+
+  // Create filtered employees list with memoization
+  const getFilteredEmployees = useCallback(() => {
+    const baseEmployees = allEmployeesWithUnit();
+    const statusFiltered = applyStatusFilter(baseEmployees);
+    return applySearchFilter(statusFiltered);
+  }, [allEmployeesWithUnit, applyStatusFilter, applySearchFilter]);
 
   const filteredEmployees = getFilteredEmployees();
 
@@ -210,13 +224,20 @@ const Index = () => {
     });
   };
 
-  // Debounce search input to prevent blocking
+  // Use a more efficient approach for search input
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Using setTimeout to prevent blocking the UI
-    setTimeout(() => {
-      setSearchQuery(value);
-    }, 0);
+    // Schedule the state update to happen when browser is idle
+    // or immediately if requestIdleCallback is not available
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => {
+        setSearchQuery(e.target.value);
+      });
+    } else {
+      // Fallback to regular timeout for browsers without requestIdleCallback
+      setTimeout(() => {
+        setSearchQuery(e.target.value);
+      }, 10);
+    }
   };
 
   // Custom search component for reuse in each tab
@@ -226,7 +247,7 @@ const Index = () => {
       <Input
         type="text"
         placeholder="Search by name or team..."
-        value={searchQuery}
+        defaultValue={searchQuery}
         onChange={handleSearchInputChange}
         className="pl-9 w-full md:w-64"
       />
