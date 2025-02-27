@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Card,
@@ -23,6 +22,7 @@ import { BusinessUnit, Employee } from "@/types/business-unit";
 import CsvUpload from "@/components/CsvUpload";
 import { useToast } from "@/components/ui/use-toast";
 import { optimizeRemoteDays } from "@/utils/schedule-optimizer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const mockBusinessUnits: BusinessUnit[] = [
   {
@@ -42,9 +42,12 @@ const mockBusinessUnits: BusinessUnit[] = [
   },
 ];
 
+type EmployeeView = "all" | "remote" | "in-office";
+
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>(mockBusinessUnits);
+  const [employeeView, setEmployeeView] = useState<EmployeeView>("all");
   const { toast } = useToast();
   const MAX_OFFICE_CAPACITY = 32;
 
@@ -107,6 +110,30 @@ const Index = () => {
   const totalEmployees = businessUnits.reduce(
     (total, unit) => total + unit.employees.length, 0
   );
+
+  // Get filtered employees based on selected view and date
+  const getFilteredEmployees = () => {
+    // Flatten all employees from all business units into one array, keeping track of their business unit
+    const allEmployeesWithUnit = businessUnits.flatMap(unit => 
+      unit.employees.map(employee => ({
+        ...employee,
+        businessUnit: unit.name,
+        businessUnitId: unit.id
+      }))
+    );
+    
+    if (employeeView === "all") {
+      return allEmployeesWithUnit;
+    }
+    
+    // Filter based on remote status for the selected date
+    return allEmployeesWithUnit.filter(employee => {
+      const isRemote = isEmployeeRemoteOnDate(employee, selectedDate);
+      return employeeView === "remote" ? isRemote : !isRemote;
+    });
+  };
+
+  const filteredEmployees = getFilteredEmployees();
 
   const handleEmployeeImport = (employees: Partial<Employee>[]) => {
     if (employees.length === 0) {
@@ -251,49 +278,45 @@ const Index = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Business Unit</TableHead>
-                  <TableHead>Remote Days</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {businessUnits.flatMap((unit) =>
-                  unit.employees.map((employee) => (
-                    <TableRow key={`${employee.id}-${unit.id}`}>
-                      <TableCell className="font-medium">{employee.name}</TableCell>
-                      <TableCell>{unit.name}</TableCell>
-                      <TableCell>
-                        {formatRemoteDays(employee.remoteDays)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={
-                            isEmployeeRemoteOnDate(employee, selectedDate)
-                              ? "bg-blue-50"
-                              : "bg-green-50"
-                          }
-                        >
-                          {isEmployeeRemoteOnDate(employee, selectedDate)
-                            ? "Remote"
-                            : "In Office"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <Tabs value={employeeView} onValueChange={(value) => setEmployeeView(value as EmployeeView)}>
+              <div className="flex items-center justify-between mb-4">
+                <TabsList>
+                  <TabsTrigger value="all">All Employees</TabsTrigger>
+                  <TabsTrigger value="in-office">In Office</TabsTrigger>
+                  <TabsTrigger value="remote">Remote</TabsTrigger>
+                </TabsList>
+                <div className="text-sm text-gray-500">
+                  {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+              
+              <TabsContent value="all" className="mt-0">
+                <EmployeeTable 
+                  employees={filteredEmployees} 
+                  selectedDate={selectedDate} 
+                  isRemoteFn={isEmployeeRemoteOnDate} 
+                  formatRemoteDaysFn={formatRemoteDays}
+                />
+              </TabsContent>
+              
+              <TabsContent value="in-office" className="mt-0">
+                <EmployeeTable 
+                  employees={filteredEmployees} 
+                  selectedDate={selectedDate} 
+                  isRemoteFn={isEmployeeRemoteOnDate} 
+                  formatRemoteDaysFn={formatRemoteDays}
+                />
+              </TabsContent>
+              
+              <TabsContent value="remote" className="mt-0">
+                <EmployeeTable 
+                  employees={filteredEmployees} 
+                  selectedDate={selectedDate} 
+                  isRemoteFn={isEmployeeRemoteOnDate} 
+                  formatRemoteDaysFn={formatRemoteDays}
+                />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
@@ -335,6 +358,68 @@ const Index = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+// Extracted component for the employee table
+interface EmployeeTableProps {
+  employees: (Employee & { businessUnit: string, businessUnitId: string })[];
+  selectedDate: Date;
+  isRemoteFn: (employee: Employee, date: Date) => boolean;
+  formatRemoteDaysFn: (remoteDays: number[]) => string;
+}
+
+const EmployeeTable = ({ employees, selectedDate, isRemoteFn, formatRemoteDaysFn }: EmployeeTableProps) => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Business Unit</TableHead>
+          <TableHead>Remote Days</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {employees.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+              No employees match the selected criteria
+            </TableCell>
+          </TableRow>
+        ) : (
+          employees.map((employee) => (
+            <TableRow key={employee.id}>
+              <TableCell className="font-medium">{employee.name}</TableCell>
+              <TableCell>{employee.businessUnit}</TableCell>
+              <TableCell>
+                {formatRemoteDaysFn(employee.remoteDays)}
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={
+                    isRemoteFn(employee, selectedDate)
+                      ? "bg-blue-50"
+                      : "bg-green-50"
+                  }
+                >
+                  {isRemoteFn(employee, selectedDate)
+                    ? "Remote"
+                    : "In Office"}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
   );
 };
 
