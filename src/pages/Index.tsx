@@ -22,6 +22,7 @@ import { Edit, UserPlus, Users } from "lucide-react";
 import { BusinessUnit, Employee } from "@/types/business-unit";
 import CsvUpload from "@/components/CsvUpload";
 import { useToast } from "@/components/ui/use-toast";
+import { optimizeRemoteDays } from "@/utils/schedule-optimizer";
 
 const mockBusinessUnits: BusinessUnit[] = [
   {
@@ -45,6 +46,7 @@ const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>(mockBusinessUnits);
   const { toast } = useToast();
+  const MAX_OFFICE_CAPACITY = 32;
 
   // Convert day of week (0-6, Sunday-Saturday) to our 1-5 (Monday-Friday) format
   const convertDayOfWeek = (dayOfWeek: number): number | null => {
@@ -75,6 +77,31 @@ const Index = () => {
       .filter(Boolean) // Remove any null values
       .join(", ");
   };
+
+  // Calculate office and remote counts for the selected date
+  const calculateCounts = () => {
+    const dayOfWeek = convertDayOfWeek(selectedDate.getDay());
+    if (dayOfWeek === null) {
+      return { officeCount: 0, remoteCount: 0 }; // Weekend
+    }
+    
+    let officeCount = 0;
+    let remoteCount = 0;
+    
+    businessUnits.forEach(unit => {
+      unit.employees.forEach(employee => {
+        if (employee.remoteDays.includes(dayOfWeek)) {
+          remoteCount++;
+        } else {
+          officeCount++;
+        }
+      });
+    });
+    
+    return { officeCount, remoteCount };
+  };
+
+  const counts = calculateCounts();
 
   const handleEmployeeImport = (employees: Partial<Employee>[]) => {
     if (employees.length === 0) {
@@ -127,7 +154,16 @@ const Index = () => {
       businessUnit.employees = [...businessUnit.employees, ...newEmployees];
     });
     
-    setBusinessUnits(updatedBusinessUnits);
+    // Optimize remote days to ensure all employees have 2 remote days
+    // and no more than MAX_OFFICE_CAPACITY people are in office any day
+    const optimizedBusinessUnits = optimizeRemoteDays(updatedBusinessUnits, MAX_OFFICE_CAPACITY);
+    
+    setBusinessUnits(optimizedBusinessUnits);
+    
+    toast({
+      title: "Schedule optimized",
+      description: `Remote days assigned to maintain max ${MAX_OFFICE_CAPACITY} people in office per day`,
+    });
   };
 
   return (
@@ -141,7 +177,7 @@ const Index = () => {
         <Card className="md:col-span-2 animate-slide-up">
           <CardHeader>
             <CardTitle>Schedule Overview</CardTitle>
-            <CardDescription>32 seats available</CardDescription>
+            <CardDescription>{MAX_OFFICE_CAPACITY} seats available</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col space-y-4">
@@ -153,10 +189,10 @@ const Index = () => {
               />
               <div className="space-x-2">
                 <Badge variant="outline" className="bg-green-50">
-                  In Office: 24
+                  In Office: {counts.officeCount}
                 </Badge>
                 <Badge variant="outline" className="bg-blue-50">
-                  Remote: 8
+                  Remote: {counts.remoteCount}
                 </Badge>
               </div>
             </div>
