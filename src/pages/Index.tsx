@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -115,7 +114,7 @@ const Index = () => {
   );
 
   // Get filtered employees based on selected view, date, and search query
-  const getFilteredEmployees = () => {
+  const getFilteredEmployees = useCallback(() => {
     // Flatten all employees from all business units into one array, keeping track of their business unit
     const allEmployeesWithUnit = businessUnits.flatMap(unit => 
       unit.employees.map(employee => ({
@@ -144,7 +143,7 @@ const Index = () => {
       employee.name.toLowerCase().includes(query) || 
       employee.businessUnit.toLowerCase().includes(query)
     );
-  };
+  }, [businessUnits, employeeView, selectedDate, searchQuery]);
 
   const filteredEmployees = getFilteredEmployees();
 
@@ -211,6 +210,15 @@ const Index = () => {
     });
   };
 
+  // Debounce search input to prevent blocking
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Using setTimeout to prevent blocking the UI
+    setTimeout(() => {
+      setSearchQuery(value);
+    }, 0);
+  };
+
   // Custom search component for reuse in each tab
   const SearchInput = () => (
     <div className="relative mb-4">
@@ -219,7 +227,7 @@ const Index = () => {
         type="text"
         placeholder="Search by name or team..."
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={handleSearchInputChange}
         className="pl-9 w-full md:w-64"
       />
     </div>
