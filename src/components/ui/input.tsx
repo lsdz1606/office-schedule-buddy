@@ -16,7 +16,8 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
         (combinedRef as React.RefObject<HTMLInputElement>).current;
       
       if (hasFocus) {
-        setTimeout(() => {
+        // Use requestAnimationFrame instead of setTimeout for better performance
+        requestAnimationFrame(() => {
           const input = (combinedRef as React.RefObject<HTMLInputElement>).current;
           if (input) {
             const length = input.value.length;
@@ -24,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
             // Restore cursor position to end
             input.setSelectionRange(length, length);
           }
-        }, 0);
+        });
       }
     });
     

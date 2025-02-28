@@ -166,7 +166,8 @@ const Index = () => {
 
   const applySearchFilter = useCallback(
     (employees) => {
-      if (!searchQuery.trim()) return employees;
+      // Only apply search filter if there are 3 or more characters
+      if (!searchQuery.trim() || searchQuery.trim().length < 3) return employees;
       
       const query = searchQuery.toLowerCase().trim();
       return employees.filter(employee => 
@@ -282,6 +283,11 @@ const Index = () => {
         onChange={handleSearchInputChange}
         className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
       />
+      {searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
+        <div className="text-xs text-gray-500 mt-1 ml-2">
+          Type at least 3 characters to search
+        </div>
+      )}
     </div>
   );
 
