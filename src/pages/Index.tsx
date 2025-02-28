@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Card,
@@ -56,10 +55,8 @@ const Index = () => {
   const { toast } = useToast();
   const MAX_OFFICE_CAPACITY = 32;
   
-  // Number of business units to show initially
   const INITIAL_UNITS_DISPLAYED = 3;
 
-  // Load business units from database on component mount
   useEffect(() => {
     const loadedBusinessUnits = loadBusinessUnits();
     if (loadedBusinessUnits && loadedBusinessUnits.length > 0) {
@@ -69,22 +66,17 @@ const Index = () => {
         description: "Loaded employee data from database",
       });
     } else {
-      // Use mock data if nothing is in the database
       setBusinessUnits(mockBusinessUnits);
     }
   }, [toast]);
 
-  // Convert day of week (0-6, Sunday-Saturday) to our 1-5 (Monday-Friday) format
   const convertDayOfWeek = (dayOfWeek: number): number | null => {
-    // Sunday (0) and Saturday (6) return null
     if (dayOfWeek === 0 || dayOfWeek === 6) return null;
-    // Monday (1) to Friday (5) stay the same
     return dayOfWeek;
   };
 
   const isEmployeeRemoteOnDate = (employee: Employee, date: Date): boolean => {
     const dayOfWeek = convertDayOfWeek(date.getDay());
-    // If weekend or no remote days set, return false
     if (dayOfWeek === null || !employee.remoteDays) return false;
     return employee.remoteDays.includes(dayOfWeek);
   };
@@ -94,21 +86,19 @@ const Index = () => {
     
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri"];
     return remoteDays
-      .sort((a, b) => a - b) // Sort days in order
+      .sort((a, b) => a - b)
       .map(day => {
-        // Convert 1-5 to 0-4 for array index
         const index = day - 1;
         return index >= 0 && index < dayNames.length ? dayNames[index] : null;
       })
-      .filter(Boolean) // Remove any null values
+      .filter(Boolean)
       .join(", ");
   };
 
-  // Calculate office and remote counts for the selected date
   const calculateCounts = () => {
     const dayOfWeek = convertDayOfWeek(selectedDate.getDay());
     if (dayOfWeek === null) {
-      return { officeCount: 0, remoteCount: 0 }; // Weekend
+      return { officeCount: 0, remoteCount: 0 };
     }
     
     let officeCount = 0;
@@ -129,17 +119,14 @@ const Index = () => {
 
   const counts = calculateCounts();
 
-  // Calculate total employees
   const totalEmployees = businessUnits.reduce(
     (total, unit) => total + unit.employees.length, 0
   );
 
-  // Get visible business units based on the showAllUnits state
   const visibleBusinessUnits = showAllUnits
     ? businessUnits
     : businessUnits.slice(0, INITIAL_UNITS_DISPLAYED);
 
-  // Prepare and memoize the base employee data array
   const allEmployeesWithUnit = useCallback(() => 
     businessUnits.flatMap(unit => 
       unit.employees.map(employee => ({
@@ -151,7 +138,6 @@ const Index = () => {
     [businessUnits]
   );
 
-  // Separate filters to better manage performance
   const applyStatusFilter = useCallback(
     (employees) => {
       if (employeeView === "all") return employees;
@@ -166,7 +152,6 @@ const Index = () => {
 
   const applySearchFilter = useCallback(
     (employees) => {
-      // Only apply search filter if there are 3 or more characters
       if (!searchQuery.trim() || searchQuery.trim().length < 3) return employees;
       
       const query = searchQuery.toLowerCase().trim();
@@ -178,7 +163,6 @@ const Index = () => {
     [searchQuery]
   );
 
-  // Create filtered employees list with memoization
   const getFilteredEmployees = useCallback(() => {
     const baseEmployees = allEmployeesWithUnit();
     const statusFiltered = applyStatusFilter(baseEmployees);
@@ -199,7 +183,6 @@ const Index = () => {
 
     const updatedBusinessUnits = [...businessUnits];
     
-    // Group employees by business unit
     const employeesByBusinessUnit: Record<string, Partial<Employee>[]> = {};
     
     employees.forEach(emp => {
@@ -210,14 +193,11 @@ const Index = () => {
       employeesByBusinessUnit[businessUnitName].push(emp);
     });
     
-    // Add employees to existing business units or create new ones
     Object.entries(employeesByBusinessUnit).forEach(([unitName, unitEmployees]) => {
-      // Find existing business unit
       let businessUnit = updatedBusinessUnits.find(
         unit => unit.name.toLowerCase() === unitName.toLowerCase()
       );
       
-      // Create new business unit if it doesn't exist
       if (!businessUnit) {
         businessUnit = {
           id: `bu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -227,7 +207,6 @@ const Index = () => {
         updatedBusinessUnits.push(businessUnit);
       }
       
-      // Add employees to the business unit
       const newEmployees = unitEmployees.map((emp, index) => ({
         id: `imported-${Date.now()}-${index}`,
         name: emp.name || "Unknown",
@@ -238,14 +217,10 @@ const Index = () => {
       businessUnit.employees = [...businessUnit.employees, ...newEmployees];
     });
     
-    // Optimize remote days to ensure all employees have 2 remote days
-    // and no more than MAX_OFFICE_CAPACITY people are in office any day
     const optimizedBusinessUnits = optimizeRemoteDays(updatedBusinessUnits, MAX_OFFICE_CAPACITY);
     
-    // Save to database
     saveBusinessUnits(optimizedBusinessUnits);
     
-    // Save the CSV upload record
     saveCSVUpload({
       timestamp: new Date().toISOString(),
       filename: "CSV Import",
@@ -253,7 +228,6 @@ const Index = () => {
       importedAt: new Date().toISOString()
     });
     
-    // Update state
     setBusinessUnits(optimizedBusinessUnits);
     
     toast({
@@ -262,17 +236,14 @@ const Index = () => {
     });
   };
 
-  // Handle search input change with debounce - won't block input
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
-  // Toggle showing all business units
   const toggleShowAllUnits = () => {
     setShowAllUnits(prev => !prev);
   };
 
-  // Custom search component for reuse in each tab
   const SearchInput = () => (
     <div className="relative mb-4">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -362,7 +333,6 @@ const Index = () => {
                 </div>
               ))}
               
-              {/* See more button - only show if there are more than 3 business units */}
               {businessUnits.length > INITIAL_UNITS_DISPLAYED && (
                 <Button 
                   variant="ghost" 
@@ -438,7 +408,6 @@ const Index = () => {
         </Card>
       </div>
 
-      {/* Total Employees Counters */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="animate-slide-up [animation-delay:600ms] card-hover overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-500/20 rounded-lg"></div>
@@ -480,7 +449,6 @@ const Index = () => {
   );
 };
 
-// Extracted component for the employee table
 interface EmployeeTableProps {
   employees: (Employee & { businessUnit: string, businessUnitId: string })[];
   selectedDate: Date;
