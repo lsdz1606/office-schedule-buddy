@@ -188,22 +188,24 @@ const Index = () => {
 
   const applySearchFilter = useCallback(
     (employees) => {
-      if (!searchQuery.trim() || searchQuery.trim().length < 3) return employees;
+      if (!searchQuery || searchQuery.trim().length < 3) return employees;
       
       const query = searchQuery.toLowerCase().trim();
+      console.log("Applying search filter with query:", query); 
       return employees.filter(employee => 
         employee.name.toLowerCase().includes(query) || 
-        employee.businessUnit.toLowerCase().includes(query)
+        (employee.businessUnit && employee.businessUnit.toLowerCase().includes(query))
       );
     },
     [searchQuery]
   );
 
   const getFilteredEmployees = useCallback(() => {
+    console.log("Getting filtered employees with search query:", searchQuery);
     const baseEmployees = allEmployeesWithUnit();
     const statusFiltered = applyStatusFilter(baseEmployees);
     return applySearchFilter(statusFiltered);
-  }, [allEmployeesWithUnit, applyStatusFilter, applySearchFilter]);
+  }, [allEmployeesWithUnit, applyStatusFilter, applySearchFilter, searchQuery]);
 
   const filteredEmployees = getFilteredEmployees();
 
@@ -273,7 +275,9 @@ const Index = () => {
   };
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    const newValue = e.target.value;
+    console.log("Search query changed to:", newValue);
+    setSearchQuery(newValue);
   };
 
   const toggleShowAllUnits = () => {
