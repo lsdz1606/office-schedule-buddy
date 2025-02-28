@@ -261,20 +261,9 @@ const Index = () => {
     });
   };
 
-  // Use a more efficient approach for search input
+  // Handle search input change
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Schedule the state update to happen when browser is idle
-    // or immediately if requestIdleCallback is not available
-    if (window.requestIdleCallback) {
-      window.requestIdleCallback(() => {
-        setSearchQuery(e.target.value);
-      });
-    } else {
-      // Fallback to regular timeout for browsers without requestIdleCallback
-      setTimeout(() => {
-        setSearchQuery(e.target.value);
-      }, 10);
-    }
+    setSearchQuery(e.target.value);
   };
 
   // Toggle showing all business units
@@ -289,7 +278,7 @@ const Index = () => {
       <Input
         type="text"
         placeholder="Search by name or team..."
-        defaultValue={searchQuery}
+        value={searchQuery}
         onChange={handleSearchInputChange}
         className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
       />
