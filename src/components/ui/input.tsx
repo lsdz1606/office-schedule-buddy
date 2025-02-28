@@ -2,10 +2,17 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  // Adding explicit id and name props to help with type checking
+  id?: string;
+  name?: string;
+}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, id, name, ...props }, ref) => {
     // Generate an id if none is provided
-    const inputId = id || `input-${React.useId()}`;
+    const generatedId = React.useId();
+    const inputId = id || `input-${generatedId}`;
     // Use the provided name or fall back to the id
     const inputName = name || inputId;
     

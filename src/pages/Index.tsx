@@ -47,6 +47,41 @@ const mockBusinessUnits: BusinessUnit[] = [
 
 type EmployeeView = "all" | "remote" | "in-office";
 
+// Creating a separate standalone SearchInput component
+interface SearchInputProps {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  id: string;
+}
+
+const SearchInput: React.FC<SearchInputProps> = ({ 
+  value, 
+  onChange, 
+  placeholder = "Search...",
+  id
+}) => {
+  return (
+    <div className="relative mb-4">
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+      <Input
+        type="text"
+        id={id}
+        name={id}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
+      />
+      {value.trim().length > 0 && value.trim().length < 3 && (
+        <div className="text-xs text-gray-500 mt-1 ml-2">
+          Type at least 3 characters to search
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
@@ -245,32 +280,6 @@ const Index = () => {
     setShowAllUnits(prev => !prev);
   };
 
-  const SearchInput = () => {
-    // Create a ref for the input element
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    return (
-      <div className="relative mb-4">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-        <Input
-          ref={inputRef}
-          type="text"
-          placeholder="Search by name or team..."
-          value={searchQuery}
-          onChange={handleSearchInputChange}
-          className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
-          id="employee-search"
-          name="employee-search"
-        />
-        {searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
-          <div className="text-xs text-gray-500 mt-1 ml-2">
-            Type at least 3 characters to search
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen p-6 animate-fade-in">
       <header className="mb-8 text-center">
@@ -384,7 +393,12 @@ const Index = () => {
               </div>
               
               <TabsContent value="all" className="mt-0">
-                <SearchInput />
+                <SearchInput 
+                  id="employee-search-all" 
+                  value={searchQuery} 
+                  onChange={handleSearchInputChange} 
+                  placeholder="Search by name or team..."
+                />
                 <EmployeeTable 
                   employees={filteredEmployees} 
                   selectedDate={selectedDate} 
@@ -394,7 +408,12 @@ const Index = () => {
               </TabsContent>
               
               <TabsContent value="in-office" className="mt-0">
-                <SearchInput />
+                <SearchInput 
+                  id="employee-search-office" 
+                  value={searchQuery} 
+                  onChange={handleSearchInputChange} 
+                  placeholder="Search by name or team..."
+                />
                 <EmployeeTable 
                   employees={filteredEmployees} 
                   selectedDate={selectedDate} 
@@ -404,7 +423,12 @@ const Index = () => {
               </TabsContent>
               
               <TabsContent value="remote" className="mt-0">
-                <SearchInput />
+                <SearchInput 
+                  id="employee-search-remote" 
+                  value={searchQuery} 
+                  onChange={handleSearchInputChange} 
+                  placeholder="Search by name or team..."
+                />
                 <EmployeeTable 
                   employees={filteredEmployees} 
                   selectedDate={selectedDate} 
