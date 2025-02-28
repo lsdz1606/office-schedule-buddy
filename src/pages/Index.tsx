@@ -55,33 +55,30 @@ interface SearchInputProps {
   id: string;
 }
 
-const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(({ 
-  value, 
-  onChange, 
-  placeholder = "Search...",
-  id
-}, ref) => {
-  return (
-    <div className="relative mb-4">
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
-      <Input
-        type="text"
-        id={id}
-        name={id}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
-        ref={ref}
-      />
-      {value.trim().length > 0 && value.trim().length < 3 && (
-        <div className="text-xs text-gray-500 mt-1 ml-2">
-          Type at least 3 characters to search
-        </div>
-      )}
-    </div>
-  );
-});
+const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
+  function SearchInput({ value, onChange, placeholder = "Search...", id }, ref) {
+    return (
+      <div className="relative mb-4">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+        <Input
+          type="text"
+          id={id}
+          name={id}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
+          ref={ref}
+        />
+        {value.trim().length > 0 && value.trim().length < 3 && (
+          <div className="text-xs text-gray-500 mt-1 ml-2">
+            Type at least 3 characters to search
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 SearchInput.displayName = "SearchInput";
 
