@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { optimizeRemoteDays } from "@/utils/schedule-optimizer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { loadBusinessUnits, saveBusinessUnits, saveCSVUpload } from "@/services/database";
 
 const mockBusinessUnits: BusinessUnit[] = [
   {
@@ -48,11 +49,26 @@ type EmployeeView = "all" | "remote" | "in-office";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>(mockBusinessUnits);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [employeeView, setEmployeeView] = useState<EmployeeView>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const { toast } = useToast();
   const MAX_OFFICE_CAPACITY = 32;
+
+  // Load business units from database on component mount
+  useEffect(() => {
+    const loadedBusinessUnits = loadBusinessUnits();
+    if (loadedBusinessUnits && loadedBusinessUnits.length > 0) {
+      setBusinessUnits(loadedBusinessUnits);
+      toast({
+        title: "Data loaded",
+        description: "Loaded employee data from database",
+      });
+    } else {
+      // Use mock data if nothing is in the database
+      setBusinessUnits(mockBusinessUnits);
+    }
+  }, [toast]);
 
   // Convert day of week (0-6, Sunday-Saturday) to our 1-5 (Monday-Friday) format
   const convertDayOfWeek = (dayOfWeek: number): number | null => {
@@ -216,6 +232,18 @@ const Index = () => {
     // and no more than MAX_OFFICE_CAPACITY people are in office any day
     const optimizedBusinessUnits = optimizeRemoteDays(updatedBusinessUnits, MAX_OFFICE_CAPACITY);
     
+    // Save to database
+    saveBusinessUnits(optimizedBusinessUnits);
+    
+    // Save the CSV upload record
+    saveCSVUpload({
+      timestamp: new Date().toISOString(),
+      filename: "CSV Import",
+      employees,
+      importedAt: new Date().toISOString()
+    });
+    
+    // Update state
     setBusinessUnits(optimizedBusinessUnits);
     
     toast({

@@ -21,12 +21,29 @@ const CsvUpload = ({ onUpload }: CsvUploadProps) => {
       try {
         const content = e.target?.result as string;
         const employees = parseCSV(content);
+        
+        // Store the CSV data in localStorage with a timestamp as part of the key
+        const timestamp = new Date().toISOString();
+        const key = `csv_upload_${timestamp}`;
+        const uploadData = {
+          timestamp,
+          filename: file.name,
+          employees,
+          importedAt: new Date().toISOString()
+        };
+        
+        localStorage.setItem(key, JSON.stringify(uploadData));
+        console.log("CSV data stored in database with key:", key);
+        
+        // Continue with the regular upload flow
         onUpload(employees);
+        
         toast({
           title: "Upload successful",
-          description: `${employees.length} employees imported`,
+          description: `${employees.length} employees imported and saved to database`,
         });
       } catch (error) {
+        console.error("CSV Upload error:", error);
         toast({
           title: "Upload failed",
           description: "Please check your CSV format",
