@@ -289,9 +289,9 @@ const Index = () => {
 
         <Card className="animate-slide-up [animation-delay:200ms]">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Business Units</CardTitle>
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <CsvUpload onUpload={handleEmployeeImport} />
                 <Button variant="outline" size="sm">
                   <UserPlus className="h-4 w-4 mr-2" />
@@ -325,7 +325,7 @@ const Index = () => {
 
         <Card className="md:col-span-3 animate-slide-up [animation-delay:400ms]">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Employee Schedule</CardTitle>
               <Button variant="outline" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
