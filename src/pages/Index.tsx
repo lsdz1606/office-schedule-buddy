@@ -55,12 +55,12 @@ interface SearchInputProps {
   id: string;
 }
 
-const SearchInput: React.FC<SearchInputProps> = ({ 
+const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(({ 
   value, 
   onChange, 
   placeholder = "Search...",
   id
-}) => {
+}, ref) => {
   return (
     <div className="relative mb-4">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
@@ -72,6 +72,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
         value={value}
         onChange={onChange}
         className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
+        ref={ref}
       />
       {value.trim().length > 0 && value.trim().length < 3 && (
         <div className="text-xs text-gray-500 mt-1 ml-2">
@@ -80,7 +81,9 @@ const SearchInput: React.FC<SearchInputProps> = ({
       )}
     </div>
   );
-};
+});
+
+SearchInput.displayName = "SearchInput";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
