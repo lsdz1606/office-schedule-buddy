@@ -262,7 +262,7 @@ const Index = () => {
     });
   };
 
-  // Handle search input change
+  // Handle search input change with debounce - won't block input
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
