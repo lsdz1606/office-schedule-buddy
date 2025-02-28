@@ -249,23 +249,23 @@ const Index = () => {
         placeholder="Search by name or team..."
         defaultValue={searchQuery}
         onChange={handleSearchInputChange}
-        className="pl-9 w-full md:w-64"
+        className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
       />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-app-light p-6 animate-fade-in">
-      <header className="mb-8">
-        <h1 className="text-4xl font-semibold text-gray-900 mb-2">Office Schedule</h1>
+    <div className="min-h-screen p-6 animate-fade-in">
+      <header className="mb-8 text-center">
+        <h1 className="text-4xl font-semibold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Office Schedule</h1>
         <p className="text-gray-600">Manage office presence and remote work schedules</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2 animate-slide-up">
-          <CardHeader>
-            <CardTitle>Schedule Overview</CardTitle>
-            <CardDescription>{MAX_OFFICE_CAPACITY} seats available</CardDescription>
+        <Card className="md:col-span-2 animate-slide-up card-glass card-hover">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-blue-700">Schedule Overview</CardTitle>
+            <CardDescription className="text-blue-500">{MAX_OFFICE_CAPACITY} seats available</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col space-y-4">
@@ -273,13 +273,13 @@ const Index = () => {
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border shadow-sm"
+                className="calendar-enhanced mx-auto"
               />
-              <div className="space-x-2">
-                <Badge variant="outline" className="bg-green-50">
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Badge variant="outline" className="badge-office py-1 px-3">
                   In Office: {counts.officeCount}
                 </Badge>
-                <Badge variant="outline" className="bg-blue-50">
+                <Badge variant="outline" className="badge-remote py-1 px-3">
                   Remote: {counts.remoteCount}
                 </Badge>
               </div>
@@ -287,13 +287,13 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <Card className="animate-slide-up [animation-delay:200ms]">
-          <CardHeader>
+        <Card className="animate-slide-up [animation-delay:200ms] card-glass card-hover">
+          <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <CardTitle>Business Units</CardTitle>
+              <CardTitle className="text-purple-700">Business Units</CardTitle>
               <div className="flex flex-wrap gap-2">
                 <CsvUpload onUpload={handleEmployeeImport} />
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-none hover:from-purple-600 hover:to-indigo-600">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add Unit
                 </Button>
@@ -302,15 +302,20 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {businessUnits.map((unit) => (
+              {businessUnits.map((unit, index) => (
                 <div
                   key={unit.id}
-                  className="p-4 rounded-lg border bg-white shadow-sm hover:shadow-md transition-shadow"
+                  className="unit-card"
+                  style={{
+                    background: index % 2 === 0 
+                      ? "linear-gradient(90deg, rgba(245,152,168,0.1) 0%, rgba(246,237,178,0.1) 100%)" 
+                      : "linear-gradient(90deg, rgba(139,210,246,0.1) 0%, rgba(178,237,246,0.1) 100%)"
+                  }}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-medium text-gray-900">{unit.name}</h3>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="hover:bg-white/30">
+                      <Edit className="h-4 w-4 text-gray-600" />
                     </Button>
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
@@ -323,25 +328,25 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-3 animate-slide-up [animation-delay:400ms]">
-          <CardHeader>
+        <Card className="md:col-span-3 animate-slide-up [animation-delay:400ms] card-glass card-hover">
+          <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <CardTitle>Employee Schedule</CardTitle>
-              <Button variant="outline" size="sm">
+              <CardTitle className="text-indigo-700">Employee Schedule</CardTitle>
+              <Button variant="outline" size="sm" className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-none hover:from-blue-600 hover:to-indigo-600">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add Employee
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <Tabs value={employeeView} onValueChange={(value) => setEmployeeView(value as EmployeeView)}>
+            <Tabs value={employeeView} onValueChange={(value) => setEmployeeView(value as EmployeeView)} className="w-full">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
-                <TabsList>
-                  <TabsTrigger value="all">All Employees</TabsTrigger>
-                  <TabsTrigger value="in-office">In Office</TabsTrigger>
-                  <TabsTrigger value="remote">Remote</TabsTrigger>
+                <TabsList className="rounded-full p-1 bg-blue-50">
+                  <TabsTrigger value="all" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white">All Employees</TabsTrigger>
+                  <TabsTrigger value="in-office" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white">In Office</TabsTrigger>
+                  <TabsTrigger value="remote" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-400 data-[state=active]:to-sky-500 data-[state=active]:text-white">Remote</TabsTrigger>
                 </TabsList>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 italic">
                   {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                 </div>
               </div>
@@ -382,34 +387,36 @@ const Index = () => {
 
       {/* Total Employees Counters */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="animate-slide-up [animation-delay:600ms]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Total In Office</CardTitle>
-            <CardDescription>
+        <Card className="animate-slide-up [animation-delay:600ms] card-hover overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-500/20 rounded-lg"></div>
+          <CardHeader className="pb-2 relative">
+            <CardTitle className="text-xl text-green-700">Total In Office</CardTitle>
+            <CardDescription className="text-green-600">
               Employees present on {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             <div className="flex items-center">
               <div className="text-5xl font-bold text-green-600">{counts.officeCount}</div>
-              <div className="ml-4 text-sm text-gray-500">
+              <div className="ml-4 text-sm text-gray-600">
                 {Math.round((counts.officeCount / totalEmployees) * 100) || 0}% of total workforce
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="animate-slide-up [animation-delay:700ms]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Total Remote</CardTitle>
-            <CardDescription>
+        <Card className="animate-slide-up [animation-delay:700ms] card-hover overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-500/20 rounded-lg"></div>
+          <CardHeader className="pb-2 relative">
+            <CardTitle className="text-xl text-blue-700">Total Remote</CardTitle>
+            <CardDescription className="text-blue-600">
               Employees working remotely on {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             <div className="flex items-center">
               <div className="text-5xl font-bold text-blue-600">{counts.remoteCount}</div>
-              <div className="ml-4 text-sm text-gray-500">
+              <div className="ml-4 text-sm text-gray-600">
                 {Math.round((counts.remoteCount / totalEmployees) * 100) || 0}% of total workforce
               </div>
             </div>
@@ -430,38 +437,40 @@ interface EmployeeTableProps {
 
 const EmployeeTable = ({ employees, selectedDate, isRemoteFn, formatRemoteDaysFn }: EmployeeTableProps) => {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Business Unit</TableHead>
-          <TableHead>Remote Days</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+    <Table className="border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+      <TableHeader className="bg-blue-50">
+        <TableRow className="table-header-row">
+          <TableHead className="text-blue-700 font-semibold">Name</TableHead>
+          <TableHead className="text-blue-700 font-semibold">Business Unit</TableHead>
+          <TableHead className="text-blue-700 font-semibold">Remote Days</TableHead>
+          <TableHead className="text-blue-700 font-semibold">Status</TableHead>
+          <TableHead className="text-blue-700 font-semibold text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {employees.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+            <TableCell colSpan={5} className="text-center py-12 text-gray-500">
               No employees match the selected criteria
             </TableCell>
           </TableRow>
         ) : (
-          employees.map((employee) => (
-            <TableRow key={employee.id}>
+          employees.map((employee, index) => (
+            <TableRow key={employee.id} className={`table-row-hover ${index % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}>
               <TableCell className="font-medium">{employee.name}</TableCell>
               <TableCell>{employee.businessUnit}</TableCell>
               <TableCell>
-                {formatRemoteDaysFn(employee.remoteDays)}
+                <div className="rounded-full bg-gray-100 px-3 py-1 text-sm inline-block">
+                  {formatRemoteDaysFn(employee.remoteDays)}
+                </div>
               </TableCell>
               <TableCell>
                 <Badge
                   variant="outline"
                   className={
                     isRemoteFn(employee, selectedDate)
-                      ? "bg-blue-50"
-                      : "bg-green-50"
+                      ? "badge-remote"
+                      : "badge-office"
                   }
                 >
                   {isRemoteFn(employee, selectedDate)
@@ -470,8 +479,8 @@ const EmployeeTable = ({ employees, selectedDate, isRemoteFn, formatRemoteDaysFn
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm">
-                  <Edit className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="hover:bg-blue-50">
+                  <Edit className="h-4 w-4 text-blue-600" />
                 </Button>
               </TableCell>
             </TableRow>
