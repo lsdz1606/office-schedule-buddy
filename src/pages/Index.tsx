@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, UserPlus, Users, Search } from "lucide-react";
+import { Edit, UserPlus, Users, Search, ChevronDown } from "lucide-react";
 import { BusinessUnit, Employee } from "@/types/business-unit";
 import CsvUpload from "@/components/CsvUpload";
 import { useToast } from "@/components/ui/use-toast";
@@ -52,8 +52,12 @@ const Index = () => {
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [employeeView, setEmployeeView] = useState<EmployeeView>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showAllUnits, setShowAllUnits] = useState<boolean>(false);
   const { toast } = useToast();
   const MAX_OFFICE_CAPACITY = 32;
+  
+  // Number of business units to show initially
+  const INITIAL_UNITS_DISPLAYED = 3;
 
   // Load business units from database on component mount
   useEffect(() => {
@@ -129,6 +133,11 @@ const Index = () => {
   const totalEmployees = businessUnits.reduce(
     (total, unit) => total + unit.employees.length, 0
   );
+
+  // Get visible business units based on the showAllUnits state
+  const visibleBusinessUnits = showAllUnits
+    ? businessUnits
+    : businessUnits.slice(0, INITIAL_UNITS_DISPLAYED);
 
   // Prepare and memoize the base employee data array
   const allEmployeesWithUnit = useCallback(() => 
@@ -268,6 +277,11 @@ const Index = () => {
     }
   };
 
+  // Toggle showing all business units
+  const toggleShowAllUnits = () => {
+    setShowAllUnits(prev => !prev);
+  };
+
   // Custom search component for reuse in each tab
   const SearchInput = () => (
     <div className="relative mb-4">
@@ -330,7 +344,7 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {businessUnits.map((unit, index) => (
+              {visibleBusinessUnits.map((unit, index) => (
                 <div
                   key={unit.id}
                   className="unit-card"
@@ -352,6 +366,22 @@ const Index = () => {
                   </div>
                 </div>
               ))}
+              
+              {/* See more button - only show if there are more than 3 business units */}
+              {businessUnits.length > INITIAL_UNITS_DISPLAYED && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={toggleShowAllUnits}
+                  className="w-full mt-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100/60 transition-colors flex items-center justify-center"
+                >
+                  {showAllUnits ? (
+                    <span className="flex items-center">Show Less <ChevronDown className="h-4 w-4 ml-1 rotate-180" /></span>
+                  ) : (
+                    <span className="flex items-center">See More <ChevronDown className="h-4 w-4 ml-1" /></span>
+                  )}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
