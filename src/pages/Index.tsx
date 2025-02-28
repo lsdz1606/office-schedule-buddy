@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Card,
@@ -244,23 +245,31 @@ const Index = () => {
     setShowAllUnits(prev => !prev);
   };
 
-  const SearchInput = () => (
-    <div className="relative mb-4">
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-      <Input
-        type="text"
-        placeholder="Search by name or team..."
-        value={searchQuery}
-        onChange={handleSearchInputChange}
-        className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
-      />
-      {searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
-        <div className="text-xs text-gray-500 mt-1 ml-2">
-          Type at least 3 characters to search
-        </div>
-      )}
-    </div>
-  );
+  const SearchInput = () => {
+    // Create a ref for the input element
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    return (
+      <div className="relative mb-4">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+        <Input
+          ref={inputRef}
+          type="text"
+          placeholder="Search by name or team..."
+          value={searchQuery}
+          onChange={handleSearchInputChange}
+          className="pl-9 w-full md:w-64 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 border-none"
+          id="employee-search"
+          name="employee-search"
+        />
+        {searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
+          <div className="text-xs text-gray-500 mt-1 ml-2">
+            Type at least 3 characters to search
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen p-6 animate-fade-in">
